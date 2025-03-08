@@ -34,7 +34,7 @@ figure(1)
 robin_parameter = 0;
 
 % set up scatterer object
-scatterer = obstaclePinchedBall();
+scatterer = obstacleCircle();
 
 %-----------------------------------------
 % setup the solver
@@ -122,3 +122,7 @@ figure(2)
 plot(theta,10*log10(2*pi*abs(b.evaluateFarField(z)).^2),'r-')
 xlabel('Receiver direction angles')
 ylabel('Bistatic ACS (dB)')
+
+total_field = real(b.evaluate(z,mask) + p.evaluate(z,mask));
+save('total_field.mat', 'total_field');
+
