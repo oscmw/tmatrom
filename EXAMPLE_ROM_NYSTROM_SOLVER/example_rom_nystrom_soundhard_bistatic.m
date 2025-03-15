@@ -42,7 +42,7 @@ scatterer = obstacleCircle();
 
 % setup solver with empty incident field for now
 solver = solverNystromRobin(kwave,[],scatterer,robin_parameter);
-solver.setup(55)
+solver.setup(60)
 
 %-----------------------------------------
 % derived parameters
@@ -85,21 +85,42 @@ disp ('Output total field at 25,000 grid points (Fig. 1)')
 %-----------------------------------------
 % visualize the total field
 %-----------------------------------------
+% visualize the total field
 figure(1)
 % setup a grid
-t=linspace(-10,10,500);
-[x,y]=meshgrid(t,t);
-z = x+y*1i;
+mesh = load('mesh.txt');  
+%t = linspace(-2,2,100);
+%[x, y] = meshgrid(t, t);
+x = mesh(:,1);
+y = mesh(:,2);
+z = x + y*1i;
 
 % get a mask for the scatterer
-mask = abs(z-center) > 1.1*radius;
+mask = abs(z-center) > 0.999999*radius;
+
+% compute the total field
+total_field = real(b.evaluate(z,mask) + p.evaluate(z,mask));
+allField = [x(:), y(:), total_field(:)];
+
+fid = fopen('meshField.txt','w');
+for i = 1:size(allField, 1)
+    fprintf(fid,'%8.6f  %8.6f  %12.8f\n', allField(i,:));
+end
+fclose(fid);
+
+
+% save data to a .mat file
+%save('total_field_data.mat', 'x', 'y', 'total_field');
+%text dosyası olarak kaydet
+
 
 % plot
-surf(x,y,real(b.evaluate(z,mask)+p.evaluate(z,mask)));
+surf(x, y, total_field);
 view([0 90]);
 shading interp;
 colorbar
 title('Total field (in the plane [-10,10]x[-10,10]) exterior to a pinched-ball sound-hard scatterer')
+
 
 % add the scatterer
 hold on
@@ -111,18 +132,26 @@ hold off
 % visualize the far field
 %-----------------------------------------
 
-disp('Evaluating and visualizing (Fig. 2):') 
-disp('Bistatic ACS (dB) at 1000 receiver directions')
-% % setup points on the circle
-theta = linspace(0,2*pi,1000);
+% setup points on the circle
+theta = linspace(0, 2*pi, 1000);
 z = exp(1i*theta);
+
+% compute bistatic ACS
+bistatic_acs = 10*log10(2*pi*abs(b.evaluateFarField(z)).^2);
+
+% save data to a .mat file
+save('bistatic_acs_data.mat', 'theta', 'bistatic_acs');
 
 % plot the cross section
 figure(2)
-plot(theta,10*log10(2*pi*abs(b.evaluateFarField(z)).^2),'r-')
+plot(theta, bistatic_acs, 'r-')
 xlabel('Receiver direction angles')
 ylabel('Bistatic ACS (dB)')
 
-total_field = real(b.evaluate(z,mask) + p.evaluate(z,mask));
-save('total_field.mat', 'total_field');
+
+
+%--------------------------------------
+% Noktasal veriyi elde etmek
+%--------------------------------------
+
 
